@@ -6,6 +6,11 @@ package aes_types is
 	--	matrix(column,row)
 	type matrix is array (integer range <>, integer range <>) of std_logic_vector(7 downto 0);
 	type generic_memory is array (integer range <>) of std_logic_vector(7 downto 0);
+	type matrix_128 is array (integer range <>) of matrix(3 downto 0, 3 downto 0);
+	
+	constant Rcon : generic_memory(9 downto 0) := (
+		X"01",X"02",X"04",X"08",X"10",X"20",X"40",X"80",X"1b",X"36"
+	);
 	constant Sbox : generic_memory(255 downto 0) := (
 		X"16", X"bb", X"54", X"b0", X"0f", X"2d", X"99", X"41", X"68", X"42", X"e6", X"bf", X"0d", X"89", X"a1", X"8c",
 		X"df", X"28", X"55", X"ce", X"e9", X"87", X"1e", X"9b", X"94", X"8e", X"d9", X"69", X"11", X"98", X"f8", X"e1",
