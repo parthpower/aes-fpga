@@ -19,7 +19,7 @@ entity aes_SubBytes_ShiftRows is
 end entity aes_SubBytes_ShiftRows;
 
 architecture RTL of aes_SubBytes_ShiftRows is
-	type state is (IDLE, PROCESSING, PROCDONE);
+	type state is (IDLE, PROCESSING);
 	signal current_state : state := IDLE;
 
 begin
@@ -33,21 +33,17 @@ begin
 					end loop;
 				end loop;
 			else
-				if (start = '1') then
-					current_state <= PROCESSING;
-				else
-					current_state <= current_state;
-				end if;
-
 				case current_state is
 					when IDLE =>
+						if (start = '1') then
+							current_state <= PROCESSING;
+						else
+							current_state <= current_state;
+						end if;
 						done <= '0';
 					when PROCESSING =>
-						current_state <= PROCDONE;
-						done          <= '0';
-					when PROCDONE =>
-						done          <= '1';
 						current_state <= IDLE;
+						done          <= '1';
 				end case;
 
 				--Substitute

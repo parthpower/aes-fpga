@@ -64,7 +64,6 @@ architecture RTL of aes_Encrypt_FSM is
 	signal latched_data_in, round_data_out, round_data_in, round_key, latched_key_in : matrix(3 downto 0, 3 downto 0);
 	signal ss_data_in, ss_data_out, mc_data_in, mc_data_out                          : matrix(3 downto 0, 3 downto 0);
 	signal mc_start, mc_done, ss_done, ss_start                                      : std_logic;
-	signal ss_start_tmp                                                              : integer range 0 to 1  := 0;
 	signal keychain                                                                  : matrix_128(10 downto 0);
 	signal round_counter                                                             : integer range 1 to 10 := 1;
 	signal ks_start, ks_done                                                         : std_logic;
@@ -99,14 +98,6 @@ begin
 			clk      => clk,
 			rst      => rst
 		);
-	--	Inst_aes_AddRoundKey : aes_AddRoundKey
-	--		port map(
-	--			data_in  => a_data_in,
-	--			key_in   => key_in,
-	--			data_out => data_out,
-	--			clk      => clk,
-	--			rst      => rst
-	--		);
 
 	state_proc : process(clk) is
 	begin
@@ -154,24 +145,18 @@ begin
 						round_data_out <= latched_data_in XOR round_key;
 						current_state  <= MAIN_ROUND;
 						done           <= '0';
+						
 					when MAIN_ROUND =>
 						round_key <= keychain(round_counter);
 
 						if (round_counter = 10) then
 							ss_data_in     <= round_data_in;
 							round_data_out <= ss_data_in XOR round_data_out;
-
-							if (ss_start_tmp = 0) then
-								ss_start     <= '1';
-								ss_start_tmp <= 1;
-							else
-								ss_start <= '0';
-							end if;
+							ss_start     <= '1';
 
 							if (ss_done = '1') then
 								current_state <= ENC_OUTPUT;
 								round_counter <= 1;
-								ss_start_tmp  <= 0;
 							else
 								current_state <= current_state;
 							end if;
@@ -180,12 +165,7 @@ begin
 							mc_data_in     <= ss_data_out;
 							round_data_out <= mc_data_out XOR round_key;
 
-							if (ss_start_tmp = 0) then
-								ss_start     <= '1';
-								ss_start_tmp <= 1;
-							else
-								ss_start <= '0';
-							end if;
+							ss_start <= '1';
 
 							if (ss_done = '1') then
 								mc_start <= '1';
@@ -196,7 +176,6 @@ begin
 							if (mc_done = '1') then
 								round_counter <= round_counter + 1;
 								round_data_in <= round_data_out;
-								ss_start_tmp  <= 0;
 							end if;
 							current_state <= current_state;
 						end if;
