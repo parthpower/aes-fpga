@@ -10,8 +10,8 @@ entity aes_SubBytes_ShiftRows is
 		data_in  : in  matrix(3 downto 0, 3 downto 0);
 		data_out : out matrix(3 downto 0, 3 downto 0);
 
-		--		start    : in  std_logic;
-		--		done     : out std_logic;
+		start    : in  std_logic;
+		done     : out std_logic;
 
 		clk      : in  std_logic;
 		rst      : in  std_logic
@@ -19,9 +19,11 @@ entity aes_SubBytes_ShiftRows is
 end entity aes_SubBytes_ShiftRows;
 
 architecture RTL of aes_SubBytes_ShiftRows is
+	type state is (IDLE, PROCESSING, PROCDONE);
+	signal current_state : state := IDLE;
+
 begin
 	process(clk)
-		variable temp_reg : generic_memory(3 downto 0);
 	begin
 		if (rising_edge(clk)) then
 			if (rst = '1') then
@@ -31,6 +33,23 @@ begin
 					end loop;
 				end loop;
 			else
+				if (start = '1') then
+					current_state <= PROCESSING;
+				else
+					current_state <= current_state;
+				end if;
+
+				case current_state is
+					when IDLE =>
+						done <= '0';
+					when PROCESSING =>
+						current_state <= PROCDONE;
+						done          <= '0';
+					when PROCDONE =>
+						done          <= '1';
+						current_state <= IDLE;
+				end case;
+
 				--Substitute
 				for J in 0 to 3 loop
 					data_out(J, 0) <= Sbox(to_integer(unsigned(data_in(J, 0))));

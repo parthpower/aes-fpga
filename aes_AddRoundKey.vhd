@@ -11,8 +11,8 @@ entity aes_AddRoundKey is
 		key_in   : in  matrix(3 downto 0, 3 downto 0);
 		data_out : out matrix(3 downto 0, 3 downto 0);
 
-		start    : in  std_logic;
-		done     : out std_logic;
+--		start    : in  std_logic;
+--		done     : out std_logic;
 
 		clk      : in  std_logic;
 		rst      : in  std_logic

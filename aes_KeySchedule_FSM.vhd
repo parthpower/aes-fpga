@@ -39,20 +39,21 @@ architecture RTL of aes_KeySchedule_FSM is
 	signal latched_key_in : matrix(3 downto 0, 3 downto 0);
 	signal round_counter  : integer range 1 to 10 := 1;
 
-	signal ks_en, ks_done, ks_start : std_logic;
-
+	signal ks_en, ks_done, ks_start    : std_logic;
+	signal Rcon_round                  : std_logic_vector(7 downto 0);
 	signal round_key_in, round_key_out : matrix(3 downto 0, 3 downto 0);
 
 begin
 	KeySchedule_Module : aes_KeySchedule
 		port map(
-			key_in => round_key_in,
-			rcon   => Rcon(round_counter - 1),
-			en     => ks_en,
-			start  => ks_start,
-			clk    => clk,
-			done   => ks_done,
-			rst    => rst
+			key_in  => round_key_in,
+			rcon    => Rcon_round,
+			key_out => round_key_out,
+			en      => ks_en,
+			start   => ks_start,
+			clk     => clk,
+			done    => ks_done,
+			rst     => rst
 		);
 	process(clk)
 	begin
@@ -67,22 +68,21 @@ begin
 					end loop;
 				end loop;
 			else
+				Rcon_round <= Rcon_const(round_counter - 1);
 				if (ks_done = '1') then
 					keychain_out(round_counter) <= round_key_out;
 					round_key_in                <= round_key_out;
-				else
-					round_key_in                <= round_key_in;
-					keychain_out(round_counter) <= keychain_out(round_counter);
 				end if;
 
 				case current_state is
 					when IDLE =>
 						if (start = '1') then
-							current_state   <= PROCESSING;
-							latched_key_in  <= key_in;
-							done            <= '0';
+							current_state  <= PROCESSING;
+							latched_key_in <= key_in;
+							done           <= '0';
+
 							keychain_out(0) <= key_in;
-							round_key_in    <= key_in;
+							round_key_in    <= latched_key_in;
 
 							ks_start <= '1';
 							ks_en    <= '1';
@@ -93,12 +93,16 @@ begin
 						end if;
 					when PROCESSING =>
 						if (round_counter = 10) then
-							done          <= '1';
-							current_state <= IDLE;
-							round_counter <= 0;
+							if (ks_done = '1') then
+								done          <= '1';
+								current_state <= IDLE;
+								round_counter <= 1;
+							end if;
 						else
+							if (ks_done = '1') then
+								round_counter <= round_counter + 1;
+							end if;
 							current_state <= PROCESSING;
-							round_counter <= round_counter + 1;
 						end if;
 				end case;
 			end if;

@@ -19,6 +19,8 @@ entity aes_MixColumns is
 end entity aes_MixColumns;
 
 architecture RTL of aes_MixColumns is
+	type state is (IDLE, PROCESSING, PROCDONE);
+	signal current_state : state := IDLE;
 begin
 	process(clk)
 	begin
@@ -36,6 +38,22 @@ begin
 					end loop;
 				end loop;
 
+				if (start = '1') then
+					current_state <= PROCESSING;
+				else
+					current_state <= current_state;
+				end if;
+
+				case current_state is
+					when IDLE =>
+						done <= '0';
+					when PROCESSING =>
+						current_state <= PROCDONE;
+						done          <= '0';
+					when PROCDONE =>
+						done          <= '1';
+						current_state <= IDLE;
+				end case;
 			end if;
 		end if;
 
